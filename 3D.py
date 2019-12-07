@@ -14,7 +14,7 @@ class Field:
         self.width = width
         self.height = height
         self.corner = 0
-        self.coords = [499, 499]
+        self.coords = [11, 11]
         self.array = []
 
     def create_array(self):
@@ -31,10 +31,17 @@ class Field:
                     string.append(1)
             self.array.append(string)
 
+    def draw_walls(self):
+        for i in range(self.height):
+            for j in range(self.width):
+                if self.array[i][j] == 1:
+                    screen2.set_at((i, j), (255, 255, 255))
+
 
 map = Field(1000, 1000)
 map.create_array()
 screen = pygame.display.set_mode((1000, 1000))
+screen2 = pygame.Surface(screen.get_size())
 clock = pygame.time.Clock()
 moves = []
 running = True
@@ -43,10 +50,21 @@ keys = {'W': False, 'A': False, 'S': False, 'D': False}
 pressed = False
 
 
+def poz(num):
+    return -1 if num > 0 else 1
+
+
 def delete(sp, char):
     for i in sp:
         if char in i:
             del sp[sp.index(i)]
+
+
+def check(sp, char):
+    for i in sp:
+        if char in i:
+            return True
+    return False
 
 
 def is_true(sp):
@@ -56,10 +74,13 @@ def is_true(sp):
     return False
 
 
+offset = [(10, 10), (10, -10), (-10, 10), (-10, -10)]
 cos, sin = 0, 0
 last_x = 0
+map.draw_walls()
 while running:
     screen.fill((0, 0, 0))
+    screen.blit(screen2, (0, 0))
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -71,21 +92,17 @@ while running:
                 keys['A'] = True
             if event.key == pygame.K_d:
                 keys['D'] = True
-            if event.key == pygame.K_s:
+            if event.key == pygame.K_s and len(moves) == 0:
                 keys['S'] = True
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_w:
                 keys['W'] = False
-                delete(moves, 'W')
             if event.key == pygame.K_a:
                 keys['A'] = False
-                delete(moves, 'A')
             if event.key == pygame.K_d:
                 keys['D'] = False
-                delete(moves, 'D')
             if event.key == pygame.K_s:
                 keys['S'] = False
-                delete(moves, 'S')
         if event.type == pygame.MOUSEMOTION:
             x1, y1 = event.pos
             dif = x1 - last_x
@@ -101,24 +118,34 @@ while running:
     sin_d = math.sin((map.corner + 90) / 180 * math.pi)
     for i in keys.keys():
         if i == 'W' and keys[i]:
+            if check(moves, 'W'):
+                delete(moves, 'W')
             move = cos_w, sin_w, 'W'
             moves.append(move)
         elif i == 'A' and keys[i]:
+            if check(moves, 'A'):
+                delete(moves, 'A')
             move = cos_a, sin_a, 'A'
             moves.append(move)
         elif i == 'D' and keys[i]:
+            if check(moves, 'D'):
+                delete(moves, 'D')
             move = cos_d, sin_d, 'D'
             moves.append(move)
         elif i == 'S' and keys[i]:
+            if check(moves, 'S'):
+                delete(moves, 'S')
             move = cos_s, sin_s, 'S'
             moves.append(move)
     if is_true(keys.values()):
         for i in moves:
-            if map.array[int(map.coords[0])][int(map.coords[1])] != 1:
-                map.coords[0] += i[0] / 10
-                map.coords[1] += i[1] / 10
-    else:
-        moves = []
+            if map.array[int(map.coords[0] + i[0] + 10)][int(map.coords[1] + i[1] + 10)] != 1 and \
+                    map.array[int(map.coords[0] + i[0] + 10)][int(map.coords[1] + i[1] - 10)] != 1 and \
+                    map.array[int(map.coords[0] + i[0] - 10)][int(map.coords[1] + i[1] - 10)] != 1 and \
+                    map.array[int(map.coords[0] + i[0] - 10)][int(map.coords[1] + i[1] + 10)] != 1:
+                map.coords[0] += i[0]
+                map.coords[1] += i[1]
+    moves = []
     x2, y2 = map.coords
     x3 = x2 + cos_w * 100
     y3 = y2 + sin_w * 100
