@@ -50,6 +50,34 @@ keys = {'W': False, 'A': False, 'S': False, 'D': False}
 pressed = False
 
 
+def algoritm(x0, y0, x1, y1):
+    delta_x = abs(x1 - x0)
+    delta_y = abs(y1 - y0)
+    error = 0
+    delta_erry = delta_y
+    delta_errx = delta_x
+    y = y0
+    x = x0
+    dir_y = y1 - y0
+    dir_y = 1 if dir_y > 0 else -1
+    dir_x = x1 - x0
+    dir_x = 1 if dir_x > 0 else -1
+    if delta_x > delta_y:
+        for x in range(x0, x1):
+            screen.set_at((x, y), (255, 255, 255))
+            error += delta_erry
+            if 2 * error >= delta_erry:
+                y += dir_y
+                error -= delta_x
+    else:
+        for y in range(y0, y1):
+            screen.set_at((x, y), (255, 255, 255))
+            error += delta_errx
+            if 2 * error >= delta_errx:
+                x += dir_x
+                error -= delta_y
+
+
 def is_x(kor):
     return True if kor[0] != 0 else False
 
@@ -173,7 +201,8 @@ while running:
     x2, y2 = map.coords
     x3 = x2 + cos_w * 100
     y3 = y2 + sin_w * 100
-    pygame.draw.line(screen, (255, 255, 255), (x2, y2), (round(x3), round(y3)), 5)
+    algoritm(round(x2), round(y2), round(x3), round(y3))
+    # pygame.draw.line(screen, (255, 255, 255), (x2, y2), (round(x3), round(y3)), 5)
     pygame.draw.circle(screen, (255, 0, 0), (int(map.coords[0]), int(map.coords[1])), 10)
     pygame.display.flip()
     clock.tick(100)
