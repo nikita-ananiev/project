@@ -14,15 +14,15 @@ class Field:
         self.width = width
         self.height = height
         self.corner = 0
-        self.coords = [11, 11]
+        self.coords = [499, 499]
         self.array = []
 
     def create_array(self):
         for i in range(self.height):
             string = []
-            if 0 < i < self.height - 1:
+            if 5 < i < self.height - 5:
                 for j in range(self.width):
-                    if 0 < j < self.width - 1:
+                    if 5 < j < self.width - 5:
                         string.append(0)
                     else:
                         string.append(1)
@@ -35,7 +35,7 @@ class Field:
         for i in range(self.height):
             for j in range(self.width):
                 if self.array[i][j] == 1:
-                    screen2.set_at((i, j), (255, 255, 255))
+                    screen2.set_at((i, j), (155, 155, 155))
 
 
 map = Field(1000, 1000)
@@ -48,6 +48,10 @@ running = True
 v = 10
 keys = {'W': False, 'A': False, 'S': False, 'D': False}
 pressed = False
+
+
+def is_x(kor):
+    return True if kor[0] != 0 else False
 
 
 def poz(num):
@@ -74,7 +78,16 @@ def is_true(sp):
     return False
 
 
-offset = [(10, 10), (10, -10), (-10, 10), (-10, -10)]
+def is_corner(sp, x, y, r):
+    if sp[x - r][y - r] == 1 or sp[x + r][y - r] == 1 or sp[x - r][y + r] == 1 or sp[x + r][y + r] == 1:
+        return True
+    return False
+
+
+stop = False
+move_y = False
+move_x = False
+offset = [(10, 0), (0, -10), (-10, 0), (0, 10)]
 cos, sin = 0, 0
 last_x = 0
 map.draw_walls()
@@ -145,6 +158,17 @@ while running:
                     map.array[int(map.coords[0] + i[0] - 10)][int(map.coords[1] + i[1] + 10)] != 1:
                 map.coords[0] += i[0]
                 map.coords[1] += i[1]
+            else:
+                for j in offset:
+                    if map.array[int(map.coords[0] + i[0] + j[0])][int(map.coords[1] + i[1] + j[1])] == 1:
+                        if not (is_corner(map.array, int(map.coords[0]), int(map.coords[1]), 10)):
+                            if is_x(j):
+                                map.coords[1] -= poz(i[1])
+                                break
+                            else:
+                                map.coords[0] -= poz(i[0])
+                                break
+
     moves = []
     x2, y2 = map.coords
     x3 = x2 + cos_w * 100
