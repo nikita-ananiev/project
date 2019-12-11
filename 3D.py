@@ -22,7 +22,9 @@ class Field:
             string = []
             if 5 < i < self.height - 5:
                 for j in range(self.width):
-                    if 5 < j < self.width - 5:
+                    if 445 <= j <= 450:
+                        string.append(1)
+                    elif 5 < j < self.width - 5:
                         string.append(0)
                     else:
                         string.append(1)
@@ -35,7 +37,7 @@ class Field:
         for i in range(self.height):
             for j in range(self.width):
                 if self.array[i][j] == 1:
-                    screen2.set_at((i, j), (155, 155, 155))
+                    screen2.set_at((j, i), (155, 155, 155))
 
 
 map = Field(1000, 1000)
@@ -111,7 +113,10 @@ def is_true(sp):
 
 
 def is_corner(sp, x, y, r):
-    if sp[x - r][y - r] == 1 or sp[x + r][y - r] == 1 or sp[x - r][y + r] == 1 or sp[x + r][y + r] == 1:
+    if sp[x - r][y] == 1 and sp[x][y - r] == 1\
+            or sp[x + r][y] == 1 and sp[x][y - r] == 1\
+            or sp[x - r][y] == 1 and sp[x][y + r] == 1\
+            or sp[x + r][y] == 1 and sp[x][y + r] == 1:
         return True
     return False
 
@@ -184,27 +189,29 @@ while running:
             moves.append(move)
     if is_true(keys.values()):
         for i in moves:
-            if map.array[int(map.coords[0] + i[0] + 10)][int(map.coords[1] + i[1] + 10)] != 1 and \
-                    map.array[int(map.coords[0] + i[0] + 10)][int(map.coords[1] + i[1] - 10)] != 1 and \
-                    map.array[int(map.coords[0] + i[0] - 10)][int(map.coords[1] + i[1] - 10)] != 1 and \
-                    map.array[int(map.coords[0] + i[0] - 10)][int(map.coords[1] + i[1] + 10)] != 1:
+            if map.array[int(map.coords[1] + i[1] + 10)][int(map.coords[0] + i[0] + 10)] != 1 and \
+                    map.array[int(map.coords[1] + i[1] - 10)][int(map.coords[0] + i[0] + 10)] != 1 and \
+                    map.array[int(map.coords[1] + i[1] - 10)][int(map.coords[0] + i[0] - 10)] != 1 and \
+                    map.array[int(map.coords[1] + i[1] + 10)][int(map.coords[0] + i[0] - 10)] != 1:
                 map.coords[0] += i[0]
                 map.coords[1] += i[1]
             else:
                 for j in offset:
-                    if map.array[int(map.coords[0] + i[0] + j[0])][int(map.coords[1] + i[1] + j[1])] == 1:
-                        if not (is_corner(map.array, int(map.coords[0]), int(map.coords[1]), 10)):
+                    if map.array[int(map.coords[1] + i[1] + j[1])][int(map.coords[0] + i[0] + j[0])] == 1:
+                        if not(is_corner(map.array, int(map.coords[1]), int(map.coords[0]), 11)):
                             if is_x(j):
                                 map.coords[1] -= poz(i[1])
                                 break
                             else:
                                 map.coords[0] -= poz(i[0])
                                 break
+                        else:
+                            pass
 
     moves = []
     x2, y2 = map.coords
-    x3 = x2 + cos_w * 100
-    y3 = y2 + sin_w * 100
+    x3 = x2 + cos_w * 1000
+    y3 = y2 + sin_w * 1000
     algoritm(round(x2), round(y2), round(x3), round(y3))
     # pygame.draw.line(screen, (255, 255, 255), (x2, y2), (round(x3), round(y3)), 5)
     pygame.draw.circle(screen, (255, 0, 0), (int(map.coords[0]), int(map.coords[1])), 10)
