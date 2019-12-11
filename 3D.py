@@ -63,14 +63,18 @@ def algoritm(x0, y0, x1, y1):
     dir_x = x1 - x0
     dir_x = 1 if dir_x > 0 else -1
     if delta_x > delta_y:
-        for x in range(x0, x1):
+        for x in range(x0, x1, dir_x):
+            if map.array[y][x] == 1:
+                return
             screen.set_at((x, y), (255, 255, 255))
             error += delta_erry
             if 2 * error >= delta_erry:
                 y += dir_y
                 error -= delta_x
-    else:
-        for y in range(y0, y1):
+    elif delta_x < delta_y:
+        for y in range(y0, y1, dir_y):
+            if map.array[y][x] == 1:
+                return
             screen.set_at((x, y), (255, 255, 255))
             error += delta_errx
             if 2 * error >= delta_errx:
