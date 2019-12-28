@@ -15,7 +15,7 @@ class Field:
         self.width = width
         self.height = height
         self.corner = 0
-        self.coords = [500, 500]
+        self.coords = [250, 250]
         self.array = []
 
     def create_array(self):
@@ -44,13 +44,18 @@ class Field:
                 if self.array[i][j] == 1:
                     screen2.set_at((j, i), (155, 155, 155))
 
-    # def add_wall(self, x1, y1, x2, y2):
+    def add_wall(self, x1, y1, x2, y2):
+        d_x = 10 if x2 - x1 >= 0 else -10
+        d_y = 10 if y2 - y1 >= 0 else -10
+        for y in range(y1 * 10, y2 * 10 + d_y):
+            for x in range(x1 * 10, x2 * 10 + d_x):
+                self.array[y][x] = 1
 
 
 
-map = Field(1000, 1000)
+map = Field(500, 500)
 map.create_array()
-screen = pygame.display.set_mode((1000, 1000))
+screen = pygame.display.set_mode((500, 500))
 screen2 = pygame.Surface(screen.get_size())
 clock = pygame.time.Clock()
 moves = []
@@ -67,7 +72,7 @@ def algoritm(x1, y1, x2, y2, dont_draw):
     dy = abs(y2 - y1)
     dir_x = 1 if x2 - x1 > 0 else -1
     dir_y = 1 if y2 - y1 > 0 else -1
-    step = 10
+    step = 1
     x = x1 + 1
     y = y1 + 1
     last_x = x
@@ -157,8 +162,10 @@ move_x = False
 offset = [(10, 0), (0, -10), (-10, 0), (0, 10)]
 cos, sin = 0, 0
 last_x = 0
-is_map = True
+is_map = False
+map.add_wall(10, 10, 40, 10)
 map.draw_walls()
+
 k = 90 / 1000
 while running:
     screen.fill((0, 0, 0))
@@ -255,7 +262,7 @@ while running:
         pygame.draw.circle(screen, (255, 0, 0), (int(map.coords[0]), int(map.coords[1])), 10)
     else:
         angle = map.corner - 45
-        for pix in range(1000):
+        for pix in range(500):
             cos = math.cos(angle / 180 * math.pi)
             sin = math.sin(angle / 180 * math.pi)
             tg = math.tan(angle / 180 * math.pi)
@@ -263,8 +270,8 @@ while running:
             y3 = y2 + sin * 1500
             distance, color = algoritm(round(x2), round(y2), round(x3), round(y3), True)
             # print(color)
-            wall_height = round(50000 / distance)
-            wall_top = (1000 - wall_height) / 2
+            wall_height = round(30000 / distance)
+            wall_top = (500 - wall_height) / 2
             wall_bottom = wall_top + wall_height
             pygame.draw.line(screen, (90, 90, 160), (pix, 0), (pix, wall_top), 1)  # ceiling
             pygame.draw.line(screen, (color, 90, 90), (pix, wall_top), (pix, wall_bottom), 1)  # wall
