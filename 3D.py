@@ -5,8 +5,9 @@ import math
 
 pygame.init()
 
-
 # size = int(input()), int(input())
+
+wall_width = 10
 
 
 class Field:
@@ -14,23 +15,27 @@ class Field:
         self.width = width
         self.height = height
         self.corner = 0
-        self.coords = [499, 499]
+        self.coords = [500, 500]
         self.array = []
 
     def create_array(self):
         for i in range(self.height):
             string = []
-            if 5 < i < self.height - 5:
+            if 10 < i < self.height - 10:
                 for j in range(self.width):
-                    if 445 <= j <= 450:
-                        string.append(1)
-                    elif 5 < j < self.width - 5:
+                    if 10 < j < self.width - 10:
                         string.append(0)
                     else:
-                        string.append(1)
+                        string.append(((i//10)*j%255)+1)
             else:
-                for j in range(self.width):
-                    string.append(1)
+                if i <= 10:
+                    for j in range(self.width):
+                        string.append(((j//100)*i%255)+1)
+                        # string.append(3)
+                elif i >= self.height - 10:
+                    for j in range(self.width):
+                        string.append(((j//20)*i%255)+1)
+                        # string.append(2)
             self.array.append(string)
 
     def draw_walls(self):
@@ -38,6 +43,9 @@ class Field:
             for j in range(self.width):
                 if self.array[i][j] == 1:
                     screen2.set_at((j, i), (155, 155, 155))
+
+    # def add_wall(self, x1, y1, x2, y2):
+
 
 
 map = Field(1000, 1000)
@@ -52,37 +60,59 @@ keys = {'W': False, 'A': False, 'S': False, 'D': False}
 pressed = False
 
 
-def algoritm(x0, y0, x1, y1):
-    delta_x = abs(x1 - x0)
-    delta_y = abs(y1 - y0)
-    error = 0
-    delta_erry = delta_y
-    delta_errx = delta_x
-    y = y0
-    x = x0
-    dir_y = y1 - y0
-    dir_y = 1 if dir_y > 0 else -1
-    dir_x = x1 - x0
-    dir_x = 1 if dir_x > 0 else -1
-    if delta_x > delta_y:
-        for x in range(x0, x1, dir_x):
-            if map.array[y][x] == 1:
-                return
-            screen.set_at((x, y), (255, 255, 255))
-            error += delta_erry
-            if 2 * error >= delta_erry:
-                y += dir_y
-                error -= delta_x
-    elif delta_x < delta_y:
-        for y in range(y0, y1, dir_y):
-            if map.array[y][x] == 1:
-                return
-            screen.set_at((x, y), (255, 255, 255))
-            error += delta_errx
-            if 2 * error >= delta_errx:
-                x += dir_x
-                error -= delta_y
-
+def algoritm(x1, y1, x2, y2, dont_draw):
+    start_x = x1
+    start_y = y1
+    dx = abs(x2 - x1)
+    dy = abs(y2 - y1)
+    dir_x = 1 if x2 - x1 > 0 else -1
+    dir_y = 1 if y2 - y1 > 0 else -1
+    step = 10
+    x = x1 + 1
+    y = y1 + 1
+    last_x = x
+    last_y = y
+    dif = 0
+    k = (dy + 1) / (dx + 1)
+    if dx >= dy:
+        while True:
+            dif += 1
+            x = x1 + step * dif * dir_x
+            y = y1 + step * dif * k * dir_y
+            if map.array[round(y)][round(x)] != 0:
+                c1, c2 = round(y), round(x)
+                x = last_x
+                y = last_y
+                if step == 1:
+                    if not(dont_draw):
+                        pygame.draw.line(screen, (255, 255, 255), (start_x, start_y), (x, y), 1)
+                    return math.sqrt((x - start_x)**2 + (y - start_y)**2), map.array[c1][c2]
+                step = 1
+                x1 = x
+                y1 = y
+                dif = 0
+            last_x = x
+            last_y = y
+    else:
+        k = 1/k
+        while True:
+            dif += 1
+            y = y1 + step * dif * dir_y
+            x = x1 + step * dif * k * dir_x
+            if map.array[round(y)][round(x)] != 0:
+                c1, c2 = round(y), round(x)
+                x = last_x
+                y = last_y
+                if step == 1:
+                    if not (dont_draw):
+                        pygame.draw.line(screen, (255, 255, 255), (start_x, start_y), (x, y), 1)
+                    return math.sqrt((x - start_x) ** 2 + (y - start_y) ** 2), map.array[c1][c2]
+                step = 1
+                x1 = x
+                y1 = y
+                dif = 0
+            last_x = x
+            last_y = y
 
 def is_x(kor):
     return True if kor[0] != 0 else False
@@ -113,10 +143,10 @@ def is_true(sp):
 
 
 def is_corner(sp, x, y, r):
-    if sp[x - r][y] == 1 and sp[x][y - r] == 1\
-            or sp[x + r][y] == 1 and sp[x][y - r] == 1\
-            or sp[x - r][y] == 1 and sp[x][y + r] == 1\
-            or sp[x + r][y] == 1 and sp[x][y + r] == 1:
+    if sp[x - r][y] != 0 and sp[x][y - r] != 0 \
+            or sp[x + r][y] != 0 and sp[x][y - r] != 0 \
+            or sp[x - r][y] != 0 and sp[x][y + r] != 0 \
+            or sp[x + r][y] != 0 and sp[x][y + r] != 0:
         return True
     return False
 
@@ -127,10 +157,13 @@ move_x = False
 offset = [(10, 0), (0, -10), (-10, 0), (0, 10)]
 cos, sin = 0, 0
 last_x = 0
+is_map = True
 map.draw_walls()
+k = 90 / 1000
 while running:
     screen.fill((0, 0, 0))
-    screen.blit(screen2, (0, 0))
+    if is_map:
+        screen.blit(screen2, (0, 0))
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -144,6 +177,8 @@ while running:
                 keys['D'] = True
             if event.key == pygame.K_s and len(moves) == 0:
                 keys['S'] = True
+            if event.key == pygame.K_m:
+                is_map = True if not is_map else False
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_w:
                 keys['W'] = False
@@ -189,16 +224,16 @@ while running:
             moves.append(move)
     if is_true(keys.values()):
         for i in moves:
-            if map.array[int(map.coords[1] + i[1] + 10)][int(map.coords[0] + i[0] + 10)] != 1 and \
-                    map.array[int(map.coords[1] + i[1] - 10)][int(map.coords[0] + i[0] + 10)] != 1 and \
-                    map.array[int(map.coords[1] + i[1] - 10)][int(map.coords[0] + i[0] - 10)] != 1 and \
-                    map.array[int(map.coords[1] + i[1] + 10)][int(map.coords[0] + i[0] - 10)] != 1:
+            if map.array[int(map.coords[1] + i[1] + 10)][int(map.coords[0] + i[0] + 10)] == 0 and \
+                    map.array[int(map.coords[1] + i[1] - 10)][int(map.coords[0] + i[0] + 10)] == 0 and \
+                    map.array[int(map.coords[1] + i[1] - 10)][int(map.coords[0] + i[0] - 10)] == 0 and \
+                    map.array[int(map.coords[1] + i[1] + 10)][int(map.coords[0] + i[0] - 10)] == 0:
                 map.coords[0] += i[0]
                 map.coords[1] += i[1]
             else:
                 for j in offset:
-                    if map.array[int(map.coords[1] + i[1] + j[1])][int(map.coords[0] + i[0] + j[0])] == 1:
-                        if not(is_corner(map.array, int(map.coords[1]), int(map.coords[0]), 11)):
+                    if map.array[int(map.coords[1] + i[1] + j[1])][int(map.coords[0] + i[0] + j[0])] != 0:
+                        if not (is_corner(map.array, int(map.coords[1]), int(map.coords[0]), 11)):
                             if is_x(j):
                                 map.coords[1] -= poz(i[1])
                                 break
@@ -210,10 +245,31 @@ while running:
 
     moves = []
     x2, y2 = map.coords
-    x3 = x2 + cos_w * 1000
-    y3 = y2 + sin_w * 1000
-    algoritm(round(x2), round(y2), round(x3), round(y3))
-    # pygame.draw.line(screen, (255, 255, 255), (x2, y2), (round(x3), round(y3)), 5)
-    pygame.draw.circle(screen, (255, 0, 0), (int(map.coords[0]), int(map.coords[1])), 10)
+    if is_map:
+        x3 = x2 + cos_w * 1500
+        y3 = y2 + sin_w * 1500
+        tg = math.tan(map.corner / 180 * math.pi)
+        s = algoritm(round(x2), round(y2), round(x3), round(y3), False)
+        # print(s)
+        # pygame.draw.line(screen, (255, 255, 255), (x2, y2), (round(x3), round(y3)), 5)
+        pygame.draw.circle(screen, (255, 0, 0), (int(map.coords[0]), int(map.coords[1])), 10)
+    else:
+        angle = map.corner - 45
+        for pix in range(1000):
+            cos = math.cos(angle / 180 * math.pi)
+            sin = math.sin(angle / 180 * math.pi)
+            tg = math.tan(angle / 180 * math.pi)
+            x3 = x2 + cos * 1500
+            y3 = y2 + sin * 1500
+            distance, color = algoritm(round(x2), round(y2), round(x3), round(y3), True)
+            # print(color)
+            wall_height = round(50000 / distance)
+            wall_top = (1000 - wall_height) / 2
+            wall_bottom = wall_top + wall_height
+            pygame.draw.line(screen, (90, 90, 160), (pix, 0), (pix, wall_top), 1)  # ceiling
+            pygame.draw.line(screen, (color, 90, 90), (pix, wall_top), (pix, wall_bottom), 1)  # wall
+            pygame.draw.line(screen, (90, 160, 90), (pix, wall_bottom), (pix, 1000), 1)  # floor
+            angle += k
+
     pygame.display.flip()
     clock.tick(100)
