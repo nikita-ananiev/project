@@ -22,7 +22,8 @@ def load_image(name, colorkey=None):
             colorkey = image.get_at((0, 0))
             image.set_colorkey(colorkey)
     else:
-        image = image.convert_alpha()
+        pass
+        # image = image.convert_alpha()
     return image
 
 
@@ -75,10 +76,11 @@ class Segment:
 
 
 class Wall:
-    def __init__(self, id, segment, color):
+    def __init__(self, id, segment, color, texture):
         self.segment = segment
         self.id = id
         self.color = color
+        self.texture = load_image(texture)
 
 
 class Point:
@@ -93,28 +95,28 @@ class Hero:
         self.angle = angle
 
 
-class Monster(pygame.sprite.Sprite):
-    image = load_image("monster.png", -1)
-    image = pygame.transform.scale(image, (100, 100))
-    def __init__(self, group, x, y, r):
+class WallPict(pygame.sprite.Sprite):
+    # image = load_image("wall.jpg", -1)
+    def __init__(self, group, pict_name):
         super().__init__(group)
-        self.image = Monster.image
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
+        # self.image = load_image(pict_name, -1)
+        # self.rect = self.image.get_rect()
 
-    def update(self, s):
-        self.image = pygame.transform.scale(Monster.image, (100 // s, 100 // s))
-        self.rect = self.image.get_rect()
+    def draw_row(self, x, y, h, n, image):
+        n %= image.get_width()
+        mask = image.subsurface(n, 0, 1, image.get_height())
+        t_mask = pygame.transform.scale(mask, (1, int(h)))
+        screen.blit(t_mask, (x, y))
 
 
-Monster(all_sprites, 500, 550, 5)
+
+return_steps = [(0, -1), (0, 1), (-1, 0), (1, 0)]
 
 
 def find_monster(x1, y1, x2, y2, hero_angle):
     hero_angle %= 360
     dy = y1 - y2
-    hyp = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+    hyp = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
     katet = x1 - x2
     cos = katet / hyp
     angle = math.acos(cos)
@@ -130,26 +132,34 @@ def find_monster(x1, y1, x2, y2, hero_angle):
     else:
         return None
 
-def draw_sky(hero_angle): #
-    pass
+
+sky_image = load_image('sky.jpg')
+transformed = pygame.transform.scale(sky_image, (1000, 500))
+def draw_sky(hero_angle, im):
+    k = 25/9
+    hero_angle %= 360
+    f_gran = 1000 - k * hero_angle
+    screen.blit(im, (1000 - f_gran, 0), (0, 0, f_gran, 500))
+    screen.blit(im, (0, 0), (f_gran, 0, 1000 - f_gran, 500))
 
 
-def add_wall(x1, y1, x2, y2, color):
+def add_wall(x1, y1, x2, y2, color, texture_name):
     p1 = Point(x1, y1)
     p2 = Point(x2, y2)
     segment = Segment(p1, p2)
-    wall = Wall(len(walls) + 1, segment, color)
+    wall = Wall(len(walls) + 1, segment, color, texture_name)
     walls.append(wall)
 
 
 def make_walls():
-    add_wall(0, 50, 1000, 51, (255, 50, 50))
-    add_wall(50, 0, 51, 1000, (50, 255, 50))
-    add_wall(950, 0, 951, 1000, (50, 50, 255))
-    add_wall(0, 950, 1000, 951, (255, 255, 50))
-    add_wall(500, 500, 600, 501, (255, 255, 50))
-    # add_wall(200, 200, 801, 601, (50, 255, 255))
-    # add_wall(200, 800, 601, 201, (50, 50, 50))
+    add_wall(0, 50, 1000, 51, (255, 50, 50), 'wall.jpg')
+    add_wall(50, 0, 51, 1000, (50, 255, 50), 'crock.jpg')
+    add_wall(950, 0, 951, 1000, (50, 50, 255), 'wall.jpg')
+    add_wall(0, 950, 1000, 951, (255, 255, 50), 'wall2.jpg')
+    # add_wall(500, 500, 600, 501, (255, 255, 50), 'wall2.jpg')
+    add_wall(200, 200, 801, 601, (50, 255, 255), 'wood.jpg')
+    add_wall(200, 800, 601, 201, (50, 50, 50), 'wall2.jpg')
+
 
 
 def get_segment_intersection(segment1, segment2):
@@ -201,6 +211,8 @@ def get_nearest_wall_intersection(hero_position, hero_look):
 
 
 make_walls()
+for wall in walls:
+    Texture = WallPict(all_sprites, wall.texture)
 # map = Field(500, 500)
 # map.create_array()
 screen = pygame.display.set_mode((1000, 1000))
@@ -215,6 +227,25 @@ keys = {'W': False, 'A': False, 'S': False, 'D': False}
 pressed = False
 
 hero = Hero(Point(450, 400), 90)
+
+
+def look_around(coords):
+    point1 = Point(coords.x, coords.y + 1000000)
+    point2 = Point(coords.x, coords.y - 1000000)
+    point3 = Point(coords.x + 1000000, coords.y)
+    point4 = Point(coords.x - 1000000, coords.y)
+    return point1, point2, point3, point4
+
+
+def is_wall(points):
+    num = 0
+    for point in points:
+        nearest_wall_intersection = get_nearest_wall_intersection(hero.position, point)
+        if nearest_wall_intersection:
+            if nearest_wall_intersection.distance <= 10:
+                return True, num
+        num += 1
+    return False, num
 
 
 def is_x(kor):
@@ -306,7 +337,7 @@ while running:
             dif = x1 - last_x if last_x else 0
             last_x = x1
             hero.angle += dif / 2
-            print(hero.angle)
+            # print(hero.angle)
     cos_w = math.cos(hero.angle / 180 * math.pi)
     sin_w = math.sin(hero.angle / 180 * math.pi)
     cos_a = math.cos((hero.angle - 90) / 180 * math.pi)
@@ -338,10 +369,17 @@ while running:
             moves.append(move)
     if is_true(keys.values()):
         for i in moves:
-            hero.position.x += 2 * i[0]
-            hero.position.y += 2 * i[1]
+            points = look_around(hero.position)
+            flag, j = is_wall(points)
+            if not (flag):
+                hero.position.x += i[0]
+                hero.position.y += i[1]
+            else:
+                hero.position.x += return_steps[j][0]
+                hero.position.y += return_steps[j][1]
 
     moves = []
+
     # x2, y2 = map.coords
     if is_map:
         screen.fill((0, 0, 0))
@@ -360,14 +398,16 @@ while running:
                          1)
         pygame.draw.circle(screen, (255, 0, 0), (round(hero.position.x), round(hero.position.y)), 10)
     else:
-        pygame.draw.rect(screen, (90, 90, 160), (0, 0, 1000, 500))
-        pygame.draw.rect(screen, (90, 160, 90), (0, 500, 1000, 500))
+        # pygame.draw.rect(screen, (90, 90, 160), (0, 0, 1000, 500))
+        draw_sky(hero.angle, transformed)
+        row_indexes = []
+        pygame.draw.rect(screen, (30, 80, 40), (0, 500, 1000, 500))
         angle = hero.angle - 45
         current_wall_id = 0
         wall_height = 0
         count = 1
         start_wall_height = None
-        color = None
+        text = None
         for pix in range(1000):
             cos = math.cos(angle / 180 * math.pi)
             sin = math.sin(angle / 180 * math.pi)
@@ -389,10 +429,10 @@ while running:
             else:
                 if nearest_wall_intersection.wall.id != current_wall_id or pix == 999:
                     prev_start_height = start_wall_height
-                    prev_color = color
+                    prev_text = text
                     start_wall_height = round(
                         30000 / nearest_wall_intersection.distance / math.cos((angle - hero.angle) / 180 * math.pi))
-                    color = nearest_wall_intersection.wall.color
+                    text = nearest_wall_intersection.wall.texture
                     if current_wall_id == 0:
                         current_wall_id = nearest_wall_intersection.wall.id
                         angle += 0.09
@@ -404,26 +444,36 @@ while running:
                     dx = count
                     k = dy / dx
                     x = 1
-                    for _ in range(count):
+
+                    for i in range(count):
                         y = x * k
                         h = 2 * y + prev_start_height
                         wall_top = (1000 - h) / 2
                         wall_bottom = wall_top + h
                         abs_x = pix - count + x
-                        pygame.draw.line(screen, prev_color, (abs_x, wall_top), (abs_x, wall_bottom), 1)
+                        if i < len(row_indexes):
+                            if len(all_sprites) > 0:
+                                Texture.draw_row(abs_x, wall_top, h, row_indexes[i], prev_text)
+                            print(nearest_wall_intersection.wall.id)
+                        # pygame.draw.line(screen, prev_color, (abs_x, wall_top), (abs_x, wall_bottom), 1)
                         x += 1
                     count = 1
                     current_wall_id = nearest_wall_intersection.wall.id
-
+                    row_indexes = []
+                inters_coords = nearest_wall_intersection.point
+                wall_start = nearest_wall_intersection.wall.segment.p1
+                row_indexes.append(
+                    int(math.sqrt((inters_coords.x - wall_start.x) ** 2 + (inters_coords.y - wall_start.y) ** 2)) * 10)
                 count += 1
                 wall_height = round(
                     30000 / nearest_wall_intersection.distance / math.cos((angle - hero.angle) / 180 * math.pi))
+
             angle += 0.09
 
     # find and draw monsters
     found = find_monster(450, 500, hero.position.x, hero.position.y, hero.angle)
-    if found:
-        pygame.draw.circle(screen, (0, 0, 0), (round(found[0]), 500), 5000 // round(found[1]))
+    # if found:
+    #     pygame.draw.circle(screen, (0, 0, 0), (round(found[0]), 500), 5000 // round(found[1]))
 
     pygame.display.flip()
     clock.tick(100)
