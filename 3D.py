@@ -112,6 +112,7 @@ class Monster(pygame.sprite.Sprite):
 Monster(all_sprites, 500, 550, 5)
 return_steps = [(0, -1), (0, 1), (-1, 0), (1, 0)]
 
+
 def find_monster(x1, y1, x2, y2, hero_angle):
     hero_angle %= 360
     dy = y1 - y2
@@ -132,8 +133,57 @@ def find_monster(x1, y1, x2, y2, hero_angle):
         return None
 
 
-def draw_sky(hero_angle):  #
-    pass
+def draw_sky(hero_angle):
+    angle = hero_angle
+    image = load_image("sky.jpg")
+    image = pygame.transform.scale(image, (1000, 500))
+    if angle > 0:
+        pixels_cut = angle * 3
+        image_cut_left = image.subsurface(pygame.Rect((pixels_cut), 0, 1000 - pixels_cut, 500))
+        image_cut_right = image.subsurface(pygame.Rect(0, 0, pixels_cut, 500))
+        screen.blit(image_cut_right, (1000 - pixels_cut, 0))
+        screen.blit(image_cut_left, (0, 0))
+
+    elif angle < 0:
+        pixels_cut = -angle * 3
+        image_cut_left = image.subsurface(pygame.Rect(0, 0, 1000 - pixels_cut, 500))
+        image_cut_right = image.subsurface(pygame.Rect((1000 - pixels_cut), 0, pixels_cut, 500))
+        screen.blit(image_cut_left, (pixels_cut, 0))
+        screen.blit(image_cut_right, (0, 0))
+
+
+# def draw_grass(hero_angle):
+#     pos_x = int(pos_x)
+#     pos_y = int(pos_y)
+#     angle = hero_angle
+#     image = load_image("grass.jpg")
+#     image = pygame.transform.scale(image, (1000, 500))
+#
+#     pixels_gorizont = pos_x
+#     image_cut_gorizont_left = image.subsurface(pygame.Rect((pixels_gorizont), 0, 1000 - pixels_gorizont, 500))
+#     image_cut_gorizont_right = image.subsurface(pygame.Rect(0, 0, pixels_gorizont, 500))
+#     screen.blit(image_cut_gorizont_right, (1000 - pixels_gorizont, 500))
+#     screen.blit(image_cut_gorizont_left, (0, 500))
+#
+#     pixels_vertical = int(pos_y / 1.7)
+#     image_cut_vertical_top = image.subsurface(pygame.Rect(0, 500 - pixels_vertical, 1000, pixels_vertical))
+#     image_cut_vertical_bott = image.subsurface(pygame.Rect(0, 0, 1000, 500 - pixels_vertical))
+#     screen.blit(image_cut_vertical_top, (0, 500))
+#     screen.blit(image_cut_vertical_bott, (0, 500 + pixels_vertical))
+#
+#     if angle > 0:
+#         pixels_cut = angle * 3
+#         image_cut_left = image.subsurface(pygame.Rect((pixels_cut), 0, 1000 - pixels_cut, 500))
+#         image_cut_right = image.subsurface(pygame.Rect(0, 0, pixels_cut, 500))
+#         screen.blit(image_cut_right, (1000 - pixels_cut, 500))
+#         screen.blit(image_cut_left, (0, 500))
+#
+#     elif angle < 0:
+#         pixels_cut = -angle * 3
+#         image_cut_left = image.subsurface(pygame.Rect(0, 0, 1000 - pixels_cut, 500))
+#         image_cut_right = image.subsurface(pygame.Rect((1000 - pixels_cut), 0, pixels_cut, 500))
+#         screen.blit(image_cut_left, (pixels_cut, 500))
+#         screen.blit(image_cut_right, (0, 500))
 
 
 def add_wall(x1, y1, x2, y2, color):
@@ -362,7 +412,7 @@ while running:
         for i in moves:
             points = look_around(hero.position)
             flag, j = is_wall(points)
-            if not(flag):
+            if not (flag):
                 hero.position.x += i[0]
                 hero.position.y += i[1]
             else:
@@ -389,7 +439,9 @@ while running:
                          1)
         pygame.draw.circle(screen, (255, 0, 0), (round(hero.position.x), round(hero.position.y)), 10)
     else:
-        pygame.draw.rect(screen, (90, 90, 160), (0, 0, 1000, 500))
+        draw_sky(hero.angle)
+        # draw_grass(hero.angle)
+        # pygame.draw.rect(screen, (90, 90, 160), (0, 0, 1000, 500))
         pygame.draw.rect(screen, (90, 160, 90), (0, 500, 1000, 500))
         angle = hero.angle - 45
         current_wall_id = 0
